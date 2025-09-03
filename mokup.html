@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maqueta Lácteos</title>
+    <style>
+        /* --- Estilos Generales --- */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f4f7f6;
+            --card-background: #ffffff;
+            --text-color: #333;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 400px;
+            height: 800px;
+            background-color: var(--card-background);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .screen {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* --- Componentes --- */
+        h1, h2 {
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .card h3 {
+            margin: 0 0 10px;
+            color: var(--secondary-color);
+        }
+        .card .amount {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .main-action-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: background-color 0.2s;
+        }
+        .main-action-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .secondary-btn {
+             background-color: var(--success-color);
+        }
+        .secondary-btn:hover {
+            background-color: #218838;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn {
+            font-size: 1.5em;
+            text-decoration: none;
+            color: var(--primary-color);
+            margin-right: 15px;
+        }
+        
+        /* --- Formularios --- */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        .unit-selector {
+            display: flex;
+            gap: 10px;
+        }
+        .unit-selector button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .unit-selector button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* --- Barra de Navegación --- */
+        .nav-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #eee;
+        }
+        .nav-bar button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--secondary-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-bar button.active {
+            color: var(--primary-color);
+        }
+        .nav-bar button svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            width: 85%;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--danger-color);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #confirm-close-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+        }
+        #cancel-close-btn {
+            background: #eee;
+            color: #333;
+            border: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="mobile-container">
+        <div id="dashboardScreen" class="screen">
+            <h2>Semana (Borrador)</h2>
+            <div class="card">
+                <h3>Ventas de la Semana</h3>
+                <div class="amount">$1,250.00</div>
+            </div>
+            <div class="card">
+                <h3>Compras de la Semana</h3>
+                <div class="amount">$480.00</div>
+            </div>
+            <button class="main-action-btn" onclick="showScreen('addSaleScreen')">+ Registrar Venta</button>
+            <button class="main-action-btn secondary-btn" onclick="showScreen('addPurchaseScreen')">+ Registrar Compra</button>
+            <button style="background-color: var(--danger-color); margin-top: 20px;" class="main-action-btn" onclick="showModal()">Cerrar Semana</button>
+        </div>
+
+        <div id="addSaleScreen" class="screen hidden">
+            <div class="header">
+                 <a href="#" class="back-btn" onclick="showScreen('dashboardScreen')">‹</a>
+                 <h2>Registrar Venta</h2>
+            </div>
+            <form onsubmit="event.preventDefault(); showScreen('dashboardScreen');">
+                <div class="form-group">
+                    <label for="cliente">Cliente</label>
+                    <select id="cliente">
+                        <option>Cliente Frecuente</option>
+                        <option>Nuevo Cliente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="producto">Producto</label>
+                    <select id="producto">
+                        <option>Queso Costeño</option>
+                        <option>Yogur Natural</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Unidad</label>
+                    <div class="unit-selector">
+                        <button type="button" class="active" onclick="toggleUnit(this)">Kilos</button>
+                        <button type="button" onclick="toggleUnit(this)">Libras</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cantidad-venta">Cantidad</label>
+                    <input type="number" id="cantidad-venta" placeholder="Ej: 5.5">
+                </div>
+                <div class="form-group">
+                    <label for="precio-venta">Precio Total</label>
+                    <input type="number" id="precio-venta" placeholder="Ej: 75.00">
+                </div>
+                <button type="submit" class="main-action-btn">Guardar Venta</button>
+            </form>
+        </div>
+        
+        <div id="addPurchaseScreen" class="screen hidden">
+            <div class="header">
+                 <a href="#" class="back-btn" onclick="showScreen('dashboardScreen')">‹</a>
+                 <h2>Registrar Compra</h2>
+            </div>
+            <form onsubmit="event.preventDefault(); showScreen('dashboardScreen');">
+                <div class="form-group">
+                    <label for="proveedor">Proveedor</label>
+                    <select id="proveedor">
+                        <option>Proveedor A</option>
+                        <option>Proveedor B</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="litros">Litros de Leche</label>
+                    <input type="number" id="litros" placeholder="Ej: 150">
+                </div>
+                <div class="form-group">
+                    <label for="precio-litro">Precio por Litro</label>
+                    <input type="number" id="precio-litro" placeholder="Ej: 1.20">
+                </div>
+                <button type="submit" class="main-action-btn secondary-btn">Guardar Compra</button>
+            </form>
+        </div>
+
+        <div id="reportsScreen" class="screen hidden">
+             <div class="header">
+                 <h2>Reportes</h2>
+            </div>
+            <p style="text-align:center; color: var(--secondary-color);">Aquí irían los filtros y gráficos de los reportes históricos (datos confirmados).</p>
+        </div>
+        
+        <div id="tercerosScreen" class="screen hidden">
+             <div class="header">
+                 <h2>Terceros</h2>
+            </div>
+             <p style="text-align:center; color: var(--secondary-color);">Aquí se podrían ver, editar y agregar clientes y proveedores.</p>
+        </div>
+
+    <div id="closeWeekModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>⚠️ Confirmar Cierre</h3>
+            <p>Una vez cerrada la semana, no podrás modificar los registros. ¿Estás seguro?</p>
+            <div class="modal-actions">
+                <button id="cancel-close-btn" onclick="hideModal()">Cancelar</button>
+                <button id="confirm-close-btn" onclick="hideModal()">Sí, Cerrar Semana</button>
+            </div>
+        </div>
+    </div>
+
+        <nav class="nav-bar">
+            <button id="nav-inicio" class="active" onclick="navigate('dashboardScreen')">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>Inicio</span>
+            </button>
+            <button id="nav-reportes" onclick="navigate('reportsScreen')">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-4 4h2v8h-2zm-4 4h2v4H8zM4 20h16v2H4zM4 2H2v18h2z"/></svg>
+                <span>Reportes</span>
+            </button>
+            <button id="nav-terceros" onclick="navigate('tercerosScreen')">
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <span>Terceros</span>
+            </tutton>
+        </nav>
+    </div>
+
+    <script>
+        const screens = document.querySelectorAll('.screen');
+        const navButtons = document.querySelectorAll('.nav-bar button');
+        const modal = document.getElementById('closeWeekModal');
+
+        function showScreen(screenId) {
+            screens.forEach(screen => {
+                if (screen.id === screenId) {
+                    screen.classList.remove('hidden');
+                } else {
+                    screen.classList.add('hidden');
+                }
+            });
+        }
+        
+        function navigate(screenId) {
+            // Actualiza la pantalla
+            showScreen(screenId);
+            
+            // Actualiza el botón activo en la barra de navegación
+            const targetNavId = 'nav-' + screenId.replace('Screen', '');
+            navButtons.forEach(btn => {
+                if (btn.id === targetNavId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        function toggleUnit(selectedButton) {
+            const buttons = selectedButton.parentElement.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            selectedButton.classList.add('active');
+        }
+
+        function showModal() {
+            modal.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            modal.classList.add('hidden');
+        }
+
+        // Mostrar la pantalla inicial al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            navigate('dashboardScreen');
+        });
+    </script>
+</body>
+</html>
