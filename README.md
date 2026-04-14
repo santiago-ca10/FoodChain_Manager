@@ -1,62 +1,119 @@
-🥛 FoodChain Manager 
+# FoodChain Manager
 
-Sistema robusto de gestión de inventarios, compras y ventas diseñado para el sector lácteo y escalable a la industria de alimentos en general. Enfoque principal en operación offline para zonas rurales y consistencia de datos.
+Sistema de gestión de inventarios, compras y ventas para el sector lácteo y de alimentos, con foco en operación offline y consistencia de datos.
 
-🏗️ Arquitectura del Proyecto
+## ✅ Descripción
 
-El proyecto sigue una arquitectura desacoplada para garantizar escalabilidad y mantenimiento:
+FoodChain Manager es una aplicación diseñada para facilitar la gestión de la cadena de suministro de productos lácteos. Su arquitectura desacoplada permite mantener el backend independiente del cliente móvil y escalar con facilidad.
 
-Backend: API REST construida con Node.js y Express.
+## 📦 Qué incluye
 
-Base de Datos: PostgreSQL (Servidor) y SQLite (Móvil).
+- API REST en Node.js y Express
+- Base de datos PostgreSQL para el backend
+- Soporte planificado para SQLite en la app móvil
+- ORM Sequelize para modelos y migraciones
+- Estructura modular de carpetas para mantenimiento fácil
 
-Móvil: Aplicación híbrida con Flutter (próximamente).
+## 🧱 Estructura del proyecto
 
-ORM: Sequelize para la gestión de modelos y migraciones.
+```text
+backend/         # Lógica de servidor y API
+  ├── src/
+  │   ├── config/      # Conexión a DB y variables de entorno
+  │   ├── controllers/ # Lógica de negocio
+  │   ├── middleware/  # Validación y seguridad
+  │   ├── models/      # Modelos Sequelize
+  │   ├── routes/      # Definición de endpoints
+  │   └── app.js       # Punto de entrada
+mobile/          # Código fuente de la aplicación móvil (Flutter)
+```
 
-📂 Estructura de Carpetas
+## ⚙️ Requisitos
 
-├── 📁 backend         # Lógica de servidor y API
-│   ├── 📁 src
-│   │   ├── 📁 config      # Conexión a DB y variables de entorno
-│   │   ├── 📁 controllers # Lógica de negocio
-│   │   ├── 📁 middleware  # Validaciones y seguridad
-│   │   ├── 📁 models      # Modelos de datos (Sequelize)
-│   │   ├── 📁 routes      # Definición de Endpoints
-│   │   └── 📄 app.js      # Punto de entrada
-│   └── ...
-├── 📁 mobile          # Código fuente de la App móvil (Flutter)
-└── 📝 README.md
+- **Node.js** 18+ 
+- **PostgreSQL** 14+ (o Docker Desktop con PostgreSQL)
+- **Git** para el control de versiones
+- Variables de entorno configuradas en `.env`
 
+## 🚀 Instalación rápida
 
-🚀 Requisitos Técnicos Actuales
+### 1️⃣ Clona el repositorio:
 
-Node.js (v18+)
+```bash
+git clone <url-del-repositorio>
+cd FoodChain\ Manager
+```
 
-PostgreSQL (v14+) o Docker Desktop
+### 2️⃣ Opción A: Con PostgreSQL local
 
-Variables de entorno configuradas en un archivo .env dentro de /backend.
+```bash
+cd backend
+npm install
+cp .env.example .env        # Copia el template
+# Edita .env con tus credenciales de PostgreSQL
+node src/app.js             # Inicia el servidor
+```
 
-🛠️ Instalación y Configuración
+### 2️⃣ Opción B: Con Docker (más fácil)
 
-Clonar el repositorio.
+```bash
+# En la raíz del proyecto
+docker-compose up -d        # Inicia PostgreSQL en contenedor
+cd backend
+npm install
+node src/app.js
+```
 
-Entrar a la carpeta backend: cd backend.
+## 📋 Variables de entorno
 
-Instalar dependencias: npm install.
+Crea un archivo `.env` en `backend/` basado en `.env.example`:
 
-Configurar el archivo .env con las credenciales de la base de datos local.
+```env
+PORT=3000
+DB_NAME=foodchain_db
+DB_USER=admin_foodchain
+DB_PASS=tu_contraseña_segura_aqui
+DB_HOST=localhost           # o 'postgres' si usas Docker
+DB_PORT=5432
+NODE_ENV=development
+```
 
-Ejecutar en modo desarrollo: node src/app.js.
+## 📌 Notas de seguridad
 
-📈 Roadmap de Desarrollo
+- ✅ El archivo `.env` está en `.gitignore` → No se sube a GitHub
+- ✅ Usa `.env.example` como template para otros desarrolladores
+- ⚠️ Cambia la contraseña por defecto (`queseriaXD`) en producción
+- ⚠️ Si `.env` se subió antes, limpia el historio con:
 
-[x] Estructura de carpetas y arquitectura inicial.
+```bash
+git rm --cached backend/.env
+git commit -m "Remove .env from tracking"
+```
 
-[x] Configuración del "Puente" de conexión a Base de Datos.
+## 🐳 Comandos útiles con Docker
 
-[ ] Definición de modelos de datos (Terceros, Productos, Transacciones).
+```bash
+docker-compose up -d        # Inicia servicios en background
+docker-compose logs -f      # Ver logs en tiempo real
+docker-compose down         # Detiene servicios
+docker-compose restart      # Reinicia
+```
 
-[ ] Desarrollo de lógica de "Borrador de Semana".
+## 📖 Documentación específica
 
-[ ] Implementación de sincronización Offline-First.
+- [Backend README](./backend/README.md) - Estructura, endpoints y desarrollo
+- [Variables de entorno](./backend/.env.example) - Todas las variables necesarias
+
+## 📈 Roadmap
+
+- [x] Estructura de carpetas y arquitectura inicial
+- [x] Configuración de conexión a base de datos
+- [ ] Definición de modelos de datos (Terceros, Productos, Transacciones)
+- [ ] Desarrollo de lógica de borrador de semana
+- [ ] Implementación de sincronización offline-first
+
+## 📚 Próximos pasos
+
+- Desarrollar la app móvil en Flutter
+- Añadir autenticación y roles de usuario
+- Crear documentación de endpoints para el API

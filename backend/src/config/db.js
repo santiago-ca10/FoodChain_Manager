@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 
 // Creamos la conexión usando las variables del archivo .env
 const sequelize = new Sequelize(
