@@ -2,18 +2,48 @@
 
 API REST para la gestión de la cadena de suministro de productos lácteos.
 
+## Descripción 
+
+Este backend permite gestionar los actores (terceros), productos y transacciones dentro de la cadena de suministro, utilizando una arquitectura modular basada en:
+
+Node.js + Express
+Sequelize (ORM)
+PostgreSQL
+
 ## 🏗️ Estructura
 
 ```
 src/
-├── app.js              # Punto de entrada principal
+├── app.js                 # Punto de entrada principal
 ├── config/
-│   └── db.js           # Conexión a base de datos (Sequelize)
-├── models/             # Modelos de datos (aún por desarrollar)
-├── routes/             # Definición de endpoints
-├── controllers/        # Lógica de negocio
-└── middleware/         # Validaciones y seguridad
+│   └── db.js              # Configuración de Sequelize
+├── models/
+│   └── Tercero.js         # Modelo de terceros
+├── controllers/
+│   └── terceroController.js  # Lógica de negocio
+├── routes/
+│   └── terceroRoutes.js   # Endpoints de terceros
+└── middleware/            # Validaciones y seguridad (pendiente)
 ```
+
+## 📦 Módulo implementado
+👤 Terceros
+
+Primer módulo funcional del sistema.
+
+Permite gestionar entidades como:
+
+Proveedores
+Clientes
+Distribuidores
+
+Endpoints base:
+
+```
+/api/terceros
+```
+
+⚠️ Documentación detallada de endpoints pendiente (Swagger próximamente)
 
 ## ⚙️ Variables de entorno
 
@@ -70,9 +100,17 @@ docker-compose up -d
 
 Esto inicia PostgreSQL automáticamente con las variables del `.env`.
 
+## 📌 Estado actual
+
+✅ Conexión a base de datos
+✅ Estructura base del proyecto
+✅ Módulo de terceros (modelo, controlador y rutas)
+
 ## 📚 Próximos pasos
 
-- [ ] Crear modelos de datos (Terceros, Productos, Transacciones)
+- [ ] CRUD completo de terceros
+- [ ] Manejo de errores centralizado
+- [ ] Autenticación (JWT)
 - [ ] Implementar rutas y controladores
 - [ ] Agregar validaciones y middleware
 - [ ] Tests unitarios
