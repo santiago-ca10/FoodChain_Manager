@@ -12,54 +12,41 @@ PostgreSQL
 
 ## 🏗️ Estructura
 
-```
 src/
 ├── app.js                 # Punto de entrada principal
 ├── config/
-│   └── db.js              # Configuración de Sequelize
+│   └── db.js              # Configuración de Sequelize (PostgreSQL)
 ├── models/
-│   └── Tercero.js         # Modelo de terceros
+│   ├── Tercero.js         # Clientes y Proveedores (UUID)
+│   └── Producto.js        # Catálogo de productos e insumos
 ├── controllers/
-│   └── terceroController.js  # Lógica de negocio
+│   ├── terceroController.js
+│   └── productoController.js
 ├── routes/
-│   └── terceroRoutes.js   # Endpoints de terceros
-└── middleware/            # Validaciones y seguridad (pendiente)
-```
+│   ├── terceroRoutes.js
+│   └── productoRoutes.js
+└── middleware/            # Próximamente: Seguridad y Validaciones
+
 
 ## 📦 Módulo implementado
-👤 Terceros
+#### 👤 1. Terceros
 
-Primer módulo funcional del sistema.
+Gestión de actores comerciales (Proveedores, Clientes, Distribuidores).
 
-Permite gestionar entidades como:
+Endpoint: `/api/terceros`
 
-Proveedores
-Clientes
-Distribuidores
+Identificador: UUID (Optimizado para sincronización offline).
 
-Endpoints base:
+#### 🧀 2. Productos
 
-```
-/api/terceros
-```
+Catálogo maestro de productos lácteos, insumos y herramientas.
+
+Endpoint: `/api/productos`
+
+Atributos: Stock actual, unidad de medida, precio sugerido.
 
 ⚠️ Documentación detallada de endpoints pendiente (Swagger próximamente)
 
-## ⚙️ Variables de entorno
-
-Crea un archivo `.env` en la raíz del backend con:
-
-```env
-PORT=3000
-DB_NAME=foodchain_db
-DB_USER=admin_foodchain
-DB_PASS=tu_contraseña_segura
-DB_HOST=localhost
-DB_PORT=5432
-NODE_ENV=development
-```
-
-Ver `.env.example` para más detalles.
 
 ## 🚀 Instalación
 
@@ -102,13 +89,17 @@ Esto inicia PostgreSQL automáticamente con las variables del `.env`.
 
 ## 📌 Estado actual
 
-✅ Conexión a base de datos
+✅ Conexión a base de datos PostgreSQL vía Docker
 ✅ Estructura base del proyecto
-✅ Módulo de terceros (modelo, controlador y rutas)
+✅ Módulo de terceros (CRUD inicial)
+✅ Módulo de Productos (CRUD inicial).
+✅ Arquitectura base (MVC)
 
-## 📚 Próximos pasos
 
-- [ ] CRUD completo de terceros
+### 📚 Próximos pasos
+
+- [ ] Transacciones (Compras y Ventas)
+- [ ] Lógica del inventario Automatico
 - [ ] Manejo de errores centralizado
 - [ ] Autenticación (JWT)
 - [ ] Implementar rutas y controladores

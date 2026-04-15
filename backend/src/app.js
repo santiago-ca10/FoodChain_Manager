@@ -2,10 +2,14 @@ const express = require('express');
 const sequelize = require('./config/db');
 const Tercero = require('./models/Tercero');
 const terceroRoutes = require('./routes/terceroRoutes');
+const Producto = require('./models/Producto'); 
+const productoRoutes = require('./routes/productoRoutes');
+
 
 const app = express();
 app.use(express.json());
 app.use('/api/terceros', terceroRoutes);
+app.use('/api/productos', productoRoutes);
 
 async function startDatabase() {
   try {
