@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const sequelize = require('./config/db');
 
 // --- Importación de Modelos ---
@@ -15,6 +16,7 @@ const movimientoRoutes = require('./routes/movimientoRoutes');
 const app = express();
 
 // Middleware para entender JSON
+app.use(cors());
 app.use(express.json());
 
 // --- Definición de Rutas API ---
