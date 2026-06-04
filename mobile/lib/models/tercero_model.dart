@@ -1,5 +1,5 @@
 class Tercero {
-  final String id;
+  final int id;      
   final String nombre;
   final String tipo;
   final String? telefono;
@@ -11,10 +11,9 @@ class Tercero {
     this.telefono,
   });
 
-  // Esta función convierte el JSON que viene del Backend en un objeto de Flutter
   factory Tercero.fromJson(Map<String, dynamic> json) {
     return Tercero(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.parse(json['id'].toString()),
       nombre: json['nombre'],
       tipo: json['tipo'],
       telefono: json['telefono'],

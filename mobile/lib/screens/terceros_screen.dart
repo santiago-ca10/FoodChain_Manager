@@ -17,7 +17,7 @@ class _TercerosScreenState extends State<TercerosScreen> {
   @override
   void initState() {
     super.initState();
-    _tercerosFuture = _api.getTerceros(); // directo, sin setState
+    _tercerosFuture = _api.getTerceros();
   }
 
   void _cargar() {
@@ -92,7 +92,7 @@ class _TercerosScreenState extends State<TercerosScreen> {
             itemBuilder: (context, index) {
               final tercero = snapshot.data![index];
               return Dismissible(
-                key: Key(tercero.id),
+                key: ValueKey(tercero.id), // era: Key(tercero.id)
                 direction: DismissDirection.endToStart,
                 background: Container(
                   color: Colors.red,
