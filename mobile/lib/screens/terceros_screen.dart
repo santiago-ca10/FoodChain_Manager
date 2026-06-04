@@ -17,16 +17,16 @@ class _TercerosScreenState extends State<TercerosScreen> {
   @override
   void initState() {
     super.initState();
-    _cargar();
+    _tercerosFuture = _api.getTerceros(); // directo, sin setState
   }
 
   void _cargar() {
-    final future = _api.getTerceros();
-    setState(() => _tercerosFuture = future);
+    setState(() {
+      _tercerosFuture = _api.getTerceros();
+    });
   }
 
   Future<void> _abrirFormulario() async {
-    // Si el formulario devuelve true, recargamos la lista
     final creado = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const FormTerceroScreen()),
@@ -92,7 +92,6 @@ class _TercerosScreenState extends State<TercerosScreen> {
             itemBuilder: (context, index) {
               final tercero = snapshot.data![index];
               return Dismissible(
-                // Swipe izquierda para eliminar
                 key: Key(tercero.id),
                 direction: DismissDirection.endToStart,
                 background: Container(
@@ -103,7 +102,7 @@ class _TercerosScreenState extends State<TercerosScreen> {
                 ),
                 confirmDismiss: (_) async {
                   await _eliminar(tercero);
-                  return false; // El _cargar() ya actualiza la lista
+                  return false;
                 },
                 child: ListTile(
                   leading: Icon(
