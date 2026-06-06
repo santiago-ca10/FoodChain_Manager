@@ -92,7 +92,7 @@ class _FormMovimientoScreenState extends State<FormMovimientoScreen> {
 
     final movimiento = Movimiento(
       tipo: _tipo,
-      cantidad: int.parse(_cantidadCtrl.text.trim()),
+      cantidad: double.parse(_cantidadCtrl.text.trim()),
       precioUnitario: double.parse(_precioCtrl.text.trim()),
       notas: _notasCtrl.text.trim().isEmpty ? null : _notasCtrl.text.trim(),
       productoId: _productoSeleccionado!.id!,
@@ -227,7 +227,7 @@ class _FormMovimientoScreenState extends State<FormMovimientoScreen> {
                         if (n == null || n <= 0) return 'Debe ser > 0';
                         if (_tipo == 'venta' &&
                             _productoSeleccionado != null &&
-                            n > _productoSeleccionado!.stock) {
+                            (double.tryParse(v) ?? 0) > _productoSeleccionado!.stock) {
                           return 'Stock insuficiente (${_productoSeleccionado!.stock})';
                         }
                         return null;

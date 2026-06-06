@@ -26,7 +26,7 @@ class _ProductosScreenState extends State<ProductosScreen> {
     });
   }
 
-  Future<void> _eliminar(int id) async {
+  Future<void> _eliminar(String id) async {
     try {
       await _api.deleteProducto(id);
       _cargar();
@@ -51,8 +51,7 @@ class _ProductosScreenState extends State<ProductosScreen> {
                   child: const Text('Cancelar')),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                style:
-                    ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('Eliminar'),
               ),
             ],
@@ -104,8 +103,7 @@ class _ProductosScreenState extends State<ProductosScreen> {
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20),
                   color: Colors.red,
-                  child:
-                      const Icon(Icons.delete, color: Colors.white, size: 28),
+                  child: const Icon(Icons.delete, color: Colors.white, size: 28),
                 ),
                 child: ListTile(
                   leading: CircleAvatar(

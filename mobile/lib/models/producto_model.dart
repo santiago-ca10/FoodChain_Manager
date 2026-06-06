@@ -1,39 +1,38 @@
 class Producto {
-  final int? id;
+  final String? id;
   final String nombre;
-  final String? descripcion;
-  final double precio;
-  final int stock;
-  final String unidad;
+  final String? categoria;
+  final String unidad;       // ← unidad_medida en backend
+  final double precio;       // ← precio_sugerido en backend
+  final double stock;        // ← stock_actual en backend (DECIMAL)
 
   Producto({
     this.id,
     required this.nombre,
-    this.descripcion,
+    this.categoria,
+    required this.unidad,
     required this.precio,
     required this.stock,
-    required this.unidad,
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) {
     return Producto(
       id: json['id'],
       nombre: json['nombre'],
-      descripcion: json['descripcion'],
-      precio: double.parse(json['precio'].toString()),
-      stock: json['stock'],
-      unidad: json['unidad'],
+      categoria: json['categoria'],
+      unidad: json['unidad_medida'],
+      precio: double.parse(json['precio_sugerido'].toString()),
+      stock: double.parse(json['stock_actual'].toString()),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      if (id != null) 'id': id,
       'nombre': nombre,
-      'descripcion': descripcion,
-      'precio': precio,
-      'stock': stock,
-      'unidad': unidad,
+      if (categoria != null) 'categoria': categoria,
+      'unidad_medida': unidad,
+      'precio_sugerido': precio,
+      'stock_actual': stock,
     };
   }
 }

@@ -31,7 +31,7 @@ class ApiService {
     throw Exception('Error al crear tercero: ${response.statusCode}');
   }
 
-  Future<void> eliminarTercero(int id) async {
+  Future<void> eliminarTercero(String id) async {
     final response = await http.delete(Uri.parse('$baseUrl/terceros/$id'));
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Error al eliminar tercero: ${response.statusCode}');
@@ -61,7 +61,7 @@ class ApiService {
     throw Exception('Error al crear producto: ${response.statusCode}');
   }
 
-  Future<Producto> updateProducto(int id, Producto producto) async {
+  Future<Producto> updateProducto(String id, Producto producto) async {
     final response = await http.put(
       Uri.parse('$baseUrl/productos/$id'),
       headers: {'Content-Type': 'application/json'},
@@ -73,7 +73,7 @@ class ApiService {
     throw Exception('Error al actualizar producto: ${response.statusCode}');
   }
 
-  Future<void> deleteProducto(int id) async {
+  Future<void> deleteProducto(String id) async {
     final response = await http.delete(Uri.parse('$baseUrl/productos/$id'));
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Error al eliminar producto: ${response.statusCode}');
@@ -104,7 +104,7 @@ class ApiService {
     throw Exception(body['error'] ?? 'Error al registrar movimiento');
   }
 
-  Future<void> deleteMovimiento(int id) async {
+  Future<void> deleteMovimiento(String id) async {
     final response = await http.delete(Uri.parse('$baseUrl/movimientos/$id'));
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Error al eliminar movimiento: ${response.statusCode}');

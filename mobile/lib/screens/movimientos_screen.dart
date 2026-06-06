@@ -26,7 +26,7 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
     });
   }
 
-  Future<void> _eliminar(int id) async {
+  Future<void> _eliminar(String id) async {
     try {
       await _api.deleteMovimiento(id);
       _cargar();
@@ -58,8 +58,7 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
                   child: const Text('Cancelar')),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                 child: const Text('Revertir'),
               ),
             ],
@@ -119,8 +118,7 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
                   child: const Icon(Icons.undo, color: Colors.white, size: 28),
                 ),
                 child: Card(
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 4),
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: color.withValues(alpha: 0.12),
@@ -157,7 +155,7 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
                     subtitle: Text(
                       '${m.terceroNombre ?? 'Tercero #${m.terceroId}'}  •  '
                       'Cant: ${m.cantidad}  •  '
-                      'Total: \$${m.total.toStringAsFixed(2)}',
+                      'Total: \$${m.totalCalculado.toStringAsFixed(2)}',
                     ),
                     trailing: m.fecha != null
                         ? Text(

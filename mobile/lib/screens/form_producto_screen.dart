@@ -18,7 +18,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   bool get _esEdicion => widget.producto != null;
 
   late final TextEditingController _nombreCtrl;
-  late final TextEditingController _descripcionCtrl;
+  late final TextEditingController _categoriaCtrl;
   late final TextEditingController _precioCtrl;
   late final TextEditingController _stockCtrl;
   late final TextEditingController _unidadCtrl;
@@ -28,18 +28,18 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
     super.initState();
     final p = widget.producto;
     _nombreCtrl = TextEditingController(text: p?.nombre ?? '');
-    _descripcionCtrl = TextEditingController(text: p?.descripcion ?? '');
-    _precioCtrl =
-        TextEditingController(text: p != null ? p.precio.toString() : '');
-    _stockCtrl =
-        TextEditingController(text: p != null ? p.stock.toString() : '0');
-    _unidadCtrl = TextEditingController(text: p?.unidad ?? 'unidad');
+    _categoriaCtrl = TextEditingController(text: p?.categoria ?? '');
+    _precioCtrl = TextEditingController(
+        text: p != null ? p.precio.toStringAsFixed(2) : '');
+    _stockCtrl = TextEditingController(
+        text: p != null ? p.stock.toStringAsFixed(2) : '0');
+    _unidadCtrl = TextEditingController(text: p?.unidad ?? '');
   }
 
   @override
   void dispose() {
     _nombreCtrl.dispose();
-    _descripcionCtrl.dispose();
+    _categoriaCtrl.dispose();
     _precioCtrl.dispose();
     _stockCtrl.dispose();
     _unidadCtrl.dispose();
@@ -53,11 +53,11 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
     final producto = Producto(
       id: widget.producto?.id,
       nombre: _nombreCtrl.text.trim(),
-      descripcion: _descripcionCtrl.text.trim().isEmpty
+      categoria: _categoriaCtrl.text.trim().isEmpty
           ? null
-          : _descripcionCtrl.text.trim(),
+          : _categoriaCtrl.text.trim(),
       precio: double.parse(_precioCtrl.text.trim()),
-      stock: int.parse(_stockCtrl.text.trim()),
+      stock: double.parse(_stockCtrl.text.trim()),
       unidad: _unidadCtrl.text.trim(),
     );
 
@@ -105,13 +105,13 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _descripcionCtrl,
+                controller: _categoriaCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Descripción',
+                  labelText: 'Categoría',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.notes_outlined),
+                  prefixIcon: Icon(Icons.label_outline),
+                  hintText: 'ej: Lácteo, Insumo, Herramienta',
                 ),
-                maxLines: 2,
               ),
               const SizedBox(height: 16),
               Row(
@@ -120,7 +120,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
                     child: TextFormField(
                       controller: _precioCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Precio *',
+                        labelText: 'Precio sugerido *',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.attach_money),
                       ),
@@ -149,15 +149,17 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.layers_outlined),
                       ),
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
                       inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}')),
                       ],
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
                           return 'Requerido';
                         }
-                        final n = int.tryParse(v);
+                        final n = double.tryParse(v);
                         if (n == null || n < 0) return 'Inválido';
                         return null;
                       },
@@ -172,7 +174,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
                   labelText: 'Unidad de medida *',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.straighten_outlined),
-                  hintText: 'ej: kg, litros, unidad, caja',
+                  hintText: 'ej: Litros, Kilos, Unidades',
                 ),
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Campo requerido' : null,
@@ -190,7 +192,8 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : Icon(_esEdicion ? Icons.save_outlined : Icons.add),
-                  label: Text(_esEdicion ? 'Guardar cambios' : 'Crear producto'),
+                  label:
+                      Text(_esEdicion ? 'Guardar cambios' : 'Crear producto'),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),

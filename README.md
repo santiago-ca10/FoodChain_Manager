@@ -1,119 +1,118 @@
 # FoodChain Manager
 
-Sistema de gestión de inventarios, compras y ventas para el sector lácteo y de alimentos, con foco en operación offline y consistencia de datos.
+Sistema de gestión de inventarios, compras y ventas para el sector lácteo y alimentario. Arquitectura desacoplada con API REST en Node.js y aplicación móvil en Flutter.
 
-## ✅ Descripción
+## Estructura del proyecto
 
-FoodChain Manager es una aplicación diseñada para facilitar la gestión de la cadena de suministro de productos lácteos. Su arquitectura desacoplada permite mantener el backend independiente del cliente móvil y escalar con facilidad.
-
-## 📦 Qué incluye
-
-- API REST en Node.js y Express
-- Base de datos PostgreSQL para el backend
-- Soporte planificado para SQLite en la app móvil
-- ORM Sequelize para modelos y migraciones
-- Estructura modular de carpetas para mantenimiento fácil
-
-## 🧱 Estructura del proyecto
-
-```text
-backend/         # Lógica de servidor y API
-  ├── src/
-  │   ├── config/      # Conexión a DB y variables de entorno
-  │   ├── controllers/ # Lógica de negocio
-  │   ├── middleware/  # Validación y seguridad
-  │   ├── models/      # Modelos Sequelize
-  │   ├── routes/      # Definición de endpoints
-  │   └── app.js       # Punto de entrada
-mobile/          # Código fuente de la aplicación móvil (Flutter)
+```
+FoodChain Manager/
+├── backend/          # API REST (Node.js + Express + Sequelize + PostgreSQL)
+├── mobile/           # App Flutter (Android, iOS, Web, Windows)
+├── docker-compose.yml
+├── .env.example
+└── .gitignore
 ```
 
-## ⚙️ Requisitos
+## Requisitos
 
-- **Node.js** 18+ 
-- **PostgreSQL** 14+ (o Docker Desktop con PostgreSQL)
-- **Git** para el control de versiones
-- Variables de entorno configuradas en `.env`
+- Node.js 18+
+- PostgreSQL 14+ (o Docker Desktop)
+- Flutter SDK 3.x+
+- Git
 
-## 🚀 Instalación rápida
+## Inicio rápido
 
-### 1️⃣ Clona el repositorio:
+### 1. Clonar el repositorio
 
 ```bash
-git clone <url-del-repositorio>
-cd FoodChain\ Manager
+git clone https://github.com/santiago-ca10/FoodChain_Manager.git
+cd FoodChain_Manager
 ```
 
-### 2️⃣ Opción A: Con PostgreSQL local
+### 2. Levantar la base de datos
+
+**Con Docker (recomendado):**
+```bash
+docker-compose up -d
+```
+
+**Con PostgreSQL local:** crear la base de datos manualmente y configurar `.env`.
+
+### 3. Iniciar el backend
 
 ```bash
 cd backend
 npm install
-cp .env.example .env        # Copia el template
-# Edita .env con tus credenciales de PostgreSQL
-node src/app.js             # Inicia el servidor
-```
-
-### 2️⃣ Opción B: Con Docker (más fácil)
-
-```bash
-# En la raíz del proyecto
-docker-compose up -d        # Inicia PostgreSQL en contenedor
-cd backend
-npm install
+cp .env.example .env   # completar con tus credenciales
 node src/app.js
 ```
 
-## 📋 Variables de entorno
+El servidor queda corriendo en `http://localhost:3000`.
 
-Crea un archivo `.env` en `backend/` basado en `.env.example`:
+### 4. Correr la app Flutter
+
+```bash
+cd mobile
+flutter pub get
+flutter run
+```
+
+> Editar `mobile/lib/config/app_config.dart` con la IP del servidor antes de correr.
+
+## Variables de entorno
+
+Crear `backend/.env` basado en `.env.example`:
 
 ```env
 PORT=3000
 DB_NAME=foodchain_db
 DB_USER=admin_foodchain
-DB_PASS=tu_contraseña_segura_aqui
-DB_HOST=localhost           # o 'postgres' si usas Docker
+DB_PASS=tu_contraseña
+DB_HOST=localhost        # usar 'postgres' si corres con Docker
 DB_PORT=5432
 NODE_ENV=development
 ```
 
-## 📌 Notas de seguridad
-
-- ✅ El archivo `.env` está en `.gitignore` → No se sube a GitHub
-- ✅ Usa `.env.example` como template para otros desarrolladores
-- ⚠️ Cambia la contraseña por defecto (`queseriaXD`) en producción
-- ⚠️ Si `.env` se subió antes, limpia el historio con:
+## Comandos útiles
 
 ```bash
-git rm --cached backend/.env
-git commit -m "Remove .env from tracking"
+# Docker
+docker-compose up -d       # iniciar PostgreSQL en background
+docker-compose logs -f     # ver logs
+docker-compose down        # detener
+
+# Backend
+node src/app.js            # iniciar servidor
+
+# Flutter
+flutter run                # correr en dispositivo/emulador conectado
+flutter run -d chrome      # correr en navegador
+flutter run -d windows     # correr en Windows
 ```
 
-## 🐳 Comandos útiles con Docker
+## Arquitectura
 
-```bash
-docker-compose up -d        # Inicia servicios en background
-docker-compose logs -f      # Ver logs en tiempo real
-docker-compose down         # Detiene servicios
-docker-compose restart      # Reinicia
+```
+Flutter App
+    │
+    │  HTTP (JSON)
+    ▼
+Express API  ──── Sequelize ORM ──── PostgreSQL
 ```
 
-## 📖 Documentación específica
+- Los IDs son **UUID v4** en todos los modelos, lo que permite generación offline sin colisiones.
+- Los movimientos de inventario usan **transacciones atómicas**: el registro del movimiento y la actualización del stock ocurren juntos o ninguno.
+- Los movimientos son **inmutables** (no tienen PUT): actúan como historial contable. Para corregir uno se elimina (con reversión automática de stock) y se vuelve a registrar.
 
-- [Backend README](./backend/README.md) - Estructura, endpoints y desarrollo
-- [Variables de entorno](./backend/.env.example) - Todas las variables necesarias
+## Recursos
 
-## 📈 Roadmap
+- [Backend — endpoints y modelos](./backend/README.md)
+- [Mobile — pantallas y patrones](./mobile/README.md)
 
-- [x] Estructura de carpetas y arquitectura inicial
-- [x] Configuración de conexión a base de datos
-- [ ] Definición de modelos de datos (Terceros, Productos, Transacciones)
-- [ ] Desarrollo de lógica de borrador de semana
-- [ ] Implementación de sincronización offline-first
+## Estado del proyecto
 
-## 📚 Próximos pasos
-
-- Desarrollar la app móvil en Flutter
-- Añadir autenticación y roles de usuario
-- Crear documentación de endpoints para el API
+- [x] Backend completo: Terceros, Productos, Movimientos (CRUD + transacciones)
+- [x] Flutter: navegación, pantallas de lista y formularios para los tres recursos
+- [ ] Autenticación y roles de usuario
+- [ ] Soporte offline (SQLite + sincronización)
+- [ ] Documentación de API (Swagger/Postman)
