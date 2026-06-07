@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'screens/terceros_screen.dart';
-import 'screens/productos_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/movimientos_screen.dart';
+import 'screens/productos_screen.dart';
+import 'screens/terceros_screen.dart';
 
 void main() {
   runApp(const FoodChainApp());
@@ -35,9 +36,10 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
-    TercerosScreen(),
-    ProductosScreen(),
+    DashboardScreen(),
     MovimientosScreen(),
+    ProductosScreen(),
+    TercerosScreen(),
   ];
 
   @override
@@ -52,9 +54,14 @@ class _MainScreenState extends State<MainScreen> {
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: 'Terceros',
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.swap_horiz_outlined),
+            selectedIcon: Icon(Icons.swap_horiz),
+            label: 'Movimientos',
           ),
           NavigationDestination(
             icon: Icon(Icons.inventory_2_outlined),
@@ -62,9 +69,9 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Productos',
           ),
           NavigationDestination(
-            icon: Icon(Icons.swap_horiz_outlined),
-            selectedIcon: Icon(Icons.swap_horiz),
-            label: 'Movimientos',
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
+            label: 'Terceros',
           ),
         ],
       ),
