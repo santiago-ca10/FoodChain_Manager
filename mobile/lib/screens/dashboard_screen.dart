@@ -39,10 +39,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return _DashboardData(movimientos: movimientos, productos: productos);
   }
 
-  void _irARegistrar() async {
+  void _irARegistrar(String tipo) async {
     final resultado = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => const FormMovimientoScreen()),
+      MaterialPageRoute(
+        builder: (_) => FormMovimientoScreen(tipoInicial: tipo),
+      ),
     );
     if (resultado == true) _cargar();
   }
@@ -210,7 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               label: 'Nueva compra',
                               icono: Icons.add_shopping_cart,
                               color: Colors.green.shade700,
-                              onTap: _irARegistrar,
+                              onTap: () => _irARegistrar('compra'),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -219,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               label: 'Nueva venta',
                               icono: Icons.point_of_sale,
                               color: Colors.red.shade700,
-                              onTap: _irARegistrar,
+                              onTap: () => _irARegistrar('venta'),
                             ),
                           ),
                         ],

@@ -6,7 +6,8 @@ import '../models/tercero_model.dart';
 import '../services/api_service.dart';
 
 class FormMovimientoScreen extends StatefulWidget {
-  const FormMovimientoScreen({super.key});
+  final String tipoInicial;
+  const FormMovimientoScreen({super.key, this.tipoInicial = 'compra'});
 
   @override
   State<FormMovimientoScreen> createState() => _FormMovimientoScreenState();
@@ -24,7 +25,7 @@ class _FormMovimientoScreenState extends State<FormMovimientoScreen> {
 
   Producto? _productoSeleccionado;
   Tercero? _terceroSeleccionado;
-  String _tipo = 'compra';
+  late String _tipo;
 
   final TextEditingController _cantidadCtrl = TextEditingController();
   final TextEditingController _precioCtrl = TextEditingController();
@@ -33,6 +34,7 @@ class _FormMovimientoScreenState extends State<FormMovimientoScreen> {
   @override
   void initState() {
     super.initState();
+    _tipo = widget.tipoInicial;
     _cargarDatos();
   }
 
