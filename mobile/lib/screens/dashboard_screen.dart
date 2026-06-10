@@ -58,8 +58,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: FutureBuilder<_DashboardData>(
         future: _futureDatos,
         builder: (context, snapshot) {
-          return CustomScrollView(
-            slivers: [
+          return RefreshIndicator(
+            onRefresh: () async => _cargar(),
+            child: CustomScrollView(
+              slivers: [
               // ── AppBar ─────────────────────────────────────
               SliverAppBar(
                 expandedHeight: 110,
@@ -232,7 +234,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ],
-          );
+          ),  // CustomScrollView
+          ); // RefreshIndicator
         },
       ),
     );
