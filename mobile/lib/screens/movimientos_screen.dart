@@ -12,169 +12,288 @@ class MovimientosScreen extends StatefulWidget {
 
 class _MovimientosScreenState extends State<MovimientosScreen> {
   late Future<List<Movimiento>> _futureMovimientos;
-  final ApiService _api = ApiService();
+
+  // Filtros
+  String _filtroTipo = 'todos'; // todos | compra | venta
+  String _filtroFecha = 'todos'; // todos | hoy | semana | mes
 
   @override
   void initState() {
     super.initState();
-    _cargar();
+    _futureMovimientos = ApiService().getMovimientos();
   }
 
-  void _cargar() {
+  void _reload() {
     setState(() {
-      _futureMovimientos = _api.getMovimientos();
+      _futureMovimientos = ApiService().getMovimientos();
     });
   }
 
-  Future<void> _eliminar(String id) async {
-    try {
-      await _api.deleteMovimiento(id);
-      _cargar();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Movimiento eliminado y stock revertido'),
-          backgroundColor: Colors.orange,
+  List<Movimiento> _aplicarFiltros(List<Movimiento> todos) {
+    final ahora = DateTime.now();
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final inicioSemana = hoy.subtract(Duration(days: ahora.weekday - 1));
+    final inicioMes = DateTime(ahora.year, ahora.month, 1);
+
+    return todos.where((m) {
+      // Filtro tipo
+      if (_filtroTipo != 'todos' && m.tipo != _filtroTipo) return false;
+
+      // Filtro fecha
+      if (_filtroFecha != 'todos') {
+        final fecha = m.fecha ?? DateTime(2000);
+        final soloFecha = DateTime(fecha.year, fecha.month, fecha.day);
+        if (_filtroFecha == 'hoy' && soloFecha != hoy) return false;
+        if (_filtroFecha == 'semana' && soloFecha.isBefore(inicioSemana)) return false;
+        if (_filtroFecha == 'mes' && soloFecha.isBefore(inicioMes)) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
+  Future<void> _eliminar(Movimiento m) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Eliminar movimiento'),
+        content: Text(
+          '¿Eliminar ${m.tipo.toUpperCase()} de ${m.cantidad} unidades?\n'
+          'Se revertirá el stock del producto.',
         ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmar == true) {
+      try {
+        await ApiService().deleteMovimiento(m.id!);
+        _reload();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al eliminar: $e')),
+          );
+        }
+      }
     }
   }
 
-  Future<bool> _confirmarEliminar(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Revertir movimiento'),
-            content: const Text(
-                'El stock del producto será ajustado automáticamente. ¿Continuar?'),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancelar')),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child: const Text('Revertir'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-  }
+  Widget _buildChipTipo(String valor, String label) {
+    final seleccionado = _filtroTipo == valor;
+    Color? color;
+    if (valor == 'compra') color = Colors.green;
+    if (valor == 'venta') color = Colors.blue;
 
-  void _irAFormulario() async {
-    final resultado = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => const FormMovimientoScreen()),
+    return FilterChip(
+      label: Text(label),
+      selected: seleccionado,
+      selectedColor: (color ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.2),
+      checkmarkColor: color ?? Theme.of(context).colorScheme.primary,
+      labelStyle: TextStyle(
+        color: seleccionado ? (color ?? Theme.of(context).colorScheme.primary) : null,
+        fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+      ),
+      onSelected: (_) => setState(() => _filtroTipo = valor),
     );
-    if (resultado == true) _cargar();
   }
 
-  Color _colorTipo(String tipo) =>
-      tipo == 'compra' ? Colors.green.shade700 : Colors.red.shade700;
+  Widget _buildChipFecha(String valor, String label) {
+    final seleccionado = _filtroFecha == valor;
+    return FilterChip(
+      label: Text(label),
+      selected: seleccionado,
+      selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+      checkmarkColor: Theme.of(context).colorScheme.primary,
+      labelStyle: TextStyle(
+        color: seleccionado ? Theme.of(context).colorScheme.primary : null,
+        fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+      ),
+      onSelected: (_) => setState(() => _filtroFecha = valor),
+    );
+  }
 
-  IconData _iconoTipo(String tipo) =>
-      tipo == 'compra' ? Icons.arrow_downward : Icons.arrow_upward;
+  Widget _buildFiltros() {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Fila tipo
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                const Text('Tipo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                const SizedBox(width: 8),
+                _buildChipTipo('todos', 'Todos'),
+                const SizedBox(width: 6),
+                _buildChipTipo('compra', 'Compra'),
+                const SizedBox(width: 6),
+                _buildChipTipo('venta', 'Venta'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Fila fecha
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                const Text('Fecha:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                const SizedBox(width: 8),
+                _buildChipFecha('todos', 'Todos'),
+                const SizedBox(width: 6),
+                _buildChipFecha('hoy', 'Hoy'),
+                const SizedBox(width: 6),
+                _buildChipFecha('semana', 'Esta semana'),
+                const SizedBox(width: 6),
+                _buildChipFecha('mes', 'Este mes'),
+              ],
+            ),
+          ),
+          const Divider(height: 12),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Movimientos'),
-        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _reload,
+          ),
+        ],
       ),
-      body: FutureBuilder<List<Movimiento>>(
-        future: _futureMovimientos,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          final movimientos = snapshot.data ?? [];
-          if (movimientos.isEmpty) {
-            return const Center(child: Text('No hay movimientos registrados.'));
-          }
-          return ListView.builder(
-            itemCount: movimientos.length,
-            itemBuilder: (context, index) {
-              final m = movimientos[index];
-              final color = _colorTipo(m.tipo);
-              return Dismissible(
-                key: ValueKey(m.id),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (_) => _confirmarEliminar(context),
-                onDismissed: (_) => _eliminar(m.id!),
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  color: Colors.orange,
-                  child: const Icon(Icons.undo, color: Colors.white, size: 28),
-                ),
-                child: Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: color.withValues(alpha: 0.12),
-                      child: Icon(_iconoTipo(m.tipo), color: color, size: 20),
-                    ),
-                    title: Row(
+      body: Column(
+        children: [
+          _buildFiltros(),
+          Expanded(
+            child: FutureBuilder<List<Movimiento>>(
+              future: _futureMovimientos,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final todos = snapshot.data ?? [];
+                final filtrados = _aplicarFiltros(todos);
+
+                if (filtrados.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            m.tipo.toUpperCase(),
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        Icon(Icons.inbox_outlined, size: 48, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        Text(
+                          todos.isEmpty
+                              ? 'No hay movimientos registrados'
+                              : 'Sin resultados para los filtros aplicados',
+                          style: TextStyle(color: Colors.grey.shade600),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            m.productoNombre ?? 'Producto #${m.productoId}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis,
+                        if (todos.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => setState(() {
+                              _filtroTipo = 'todos';
+                              _filtroFecha = 'todos';
+                            }),
+                            child: const Text('Limpiar filtros'),
                           ),
-                        ),
+                        ],
                       ],
                     ),
-                    subtitle: Text(
-                      '${m.terceroNombre ?? 'Tercero #${m.terceroId}'}  •  '
-                      'Cant: ${m.cantidad}  •  '
-                      'Total: \$${m.totalCalculado.toStringAsFixed(2)}',
-                    ),
-                    trailing: m.fecha != null
-                        ? Text(
-                            '${m.fecha!.day}/${m.fecha!.month}',
-                            style: TextStyle(
-                                color: Colors.grey.shade500, fontSize: 12),
-                          )
-                        : null,
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async => _reload(),
+                  child: ListView.builder(
+                    itemCount: filtrados.length,
+                    itemBuilder: (context, index) {
+                      final m = filtrados[index];
+                      final esCompra = m.tipo == 'compra';
+                      final color = esCompra ? Colors.green : Colors.blue;
+                      final icono = esCompra ? Icons.arrow_downward : Icons.arrow_upward;
+
+                      return Dismissible(
+                        key: ValueKey<String>(m.id!),
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (_) async {
+                          await _eliminar(m);
+                          return false; // manejamos el reload manualmente
+                        },
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 16),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: color.withValues(alpha: 0.15),
+                            child: Icon(icono, color: color, size: 20),
+                          ),
+                          title: Text(
+                            m.productoNombre ?? m.productoId,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          subtitle: Text(
+                            '${m.tipo.toUpperCase()} · ${m.cantidad % 1 == 0 ? m.cantidad.toInt() : m.cantidad} uds'
+                            '${m.terceroNombre != null ? ' · ${m.terceroNombre}' : ''}',
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '\$${m.totalCalculado.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: color,
+                                ),
+                              ),
+                              if (m.fecha != null)
+                                Text(
+                                  '${m.fecha!.day}/${m.fecha!.month}/${m.fecha!.year}',
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _irAFormulario,
-        icon: const Icon(Icons.swap_horiz),
-        label: const Text('Registrar'),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const FormMovimientoScreen()),
+          );
+          _reload();
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
