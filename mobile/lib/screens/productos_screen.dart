@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/producto_model.dart';
 import '../services/api_service.dart';
 import 'form_producto_screen.dart';
+import 'producto_detalle_screen.dart';
 
 class ProductosScreen extends StatefulWidget {
   const ProductosScreen({super.key});
@@ -60,11 +61,21 @@ class _ProductosScreenState extends State<ProductosScreen> {
         false;
   }
 
-  void _irAFormulario([Producto? producto]) async {
+  void _irADetalle(Producto producto) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductoDetalleScreen(producto: producto),
+      ),
+    );
+    _cargar(); // refresca por si editaron desde el detalle
+  }
+
+  void _irAFormulario() async {
     final resultado = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => FormProductoScreen(producto: producto),
+        builder: (_) => const FormProductoScreen(),
       ),
     );
     if (resultado == true) _cargar();
@@ -90,44 +101,61 @@ class _ProductosScreenState extends State<ProductosScreen> {
           if (productos.isEmpty) {
             return const Center(child: Text('No hay productos registrados.'));
           }
-          return ListView.builder(
-            itemCount: productos.length,
-            itemBuilder: (context, index) {
-              final p = productos[index];
-              return Dismissible(
-                key: ValueKey(p.id),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (_) => _confirmarEliminar(context),
-                onDismissed: (_) => _eliminar(p.id!),
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  color: Colors.red,
-                  child: const Icon(Icons.delete, color: Colors.white, size: 28),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primaryContainer,
-                    child: Text(
-                      p.nombre[0].toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+          return RefreshIndicator(
+            onRefresh: () async => _cargar(),
+            child: ListView.builder(
+              itemCount: productos.length,
+              itemBuilder: (context, index) {
+                final p = productos[index];
+                final stockBajo = p.stock < 10;
+                return Dismissible(
+                  key: ValueKey(p.id),
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: (_) => _confirmarEliminar(context),
+                  onDismissed: (_) => _eliminar(p.id!),
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    color: Colors.red,
+                    child:
+                        const Icon(Icons.delete, color: Colors.white, size: 28),
                   ),
-                  title: Text(p.nombre,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(
-                      'Stock: ${p.stock} ${p.unidad}  •  \$${p.precio.toStringAsFixed(2)}'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _irAFormulario(p),
-                ),
-              );
-            },
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      child: Text(
+                        p.nombre[0].toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    title: Text(p.nombre,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                        'Stock: ${p.stock % 1 == 0 ? p.stock.toInt() : p.stock} ${p.unidad}  •  \$${p.precio.toStringAsFixed(2)}'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (stockBajo)
+                          Icon(Icons.warning_amber_rounded,
+                              color: p.stock <= 0
+                                  ? Colors.red
+                                  : Colors.orange,
+                              size: 18),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
+                    onTap: () => _irADetalle(p),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _irAFormulario(),
+        onPressed: _irAFormulario,
         icon: const Icon(Icons.add),
         label: const Text('Nuevo producto'),
       ),
