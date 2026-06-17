@@ -20,6 +20,15 @@ dependencies:
   # Guardar datos localmente (ej: token JWT del login)
   shared_preferences: ^2.2.2
 
+  # Base de datos local SQLite para modo offline
+  sqflite: ^2.3.2
+
+  # Detectar conexión a internet
+  connectivity_plus: ^6.0.3
+
+  # Manejo de rutas de archivos y bases de datos
+  path: ^1.9.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -40,3 +49,4 @@ flutter:
   #   - family: MiFuente
   #     fonts:
   #       - asset: fonts/MiFuente-Regular.ttf
+  

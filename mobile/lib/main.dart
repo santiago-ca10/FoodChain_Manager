@@ -5,8 +5,12 @@ import 'screens/productos_screen.dart';
 import 'screens/terceros_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
+import 'services/sync_service.dart';
+import 'services/local_database.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await LocalDatabase().db; // inicializa SQLite al arrancar
   runApp(const FoodChainApp());
 }
 
@@ -27,7 +31,7 @@ class FoodChainApp extends StatelessWidget {
   }
 }
 
-// ── Splash: decide si va a Login o MainScreen ──────────────────
+// ── Splash ─────────────────────────────────────────────────────
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -88,6 +92,10 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  bool _online = true;
+  int _pendientes = 0;
+  final _sync = SyncService();
+  final _local = LocalDatabase();
 
   final List<Widget> _screens = const [
     DashboardScreen(),
@@ -95,6 +103,28 @@ class _MainScreenState extends State<MainScreen> {
     ProductosScreen(),
     TercerosScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initConectividad();
+  }
+
+  void _initConectividad() {
+    // Estado inicial
+    _sync.hayConexion().then((online) async {
+      if (online) await _sync.sincronizarPendientes();
+      final p = await _local.countPendientes();
+      if (mounted) setState(() { _online = online; _pendientes = p; });
+    });
+
+    // Escuchar cambios
+    _sync.conectividadStream.listen((online) async {
+      if (online) await _sync.sincronizarPendientes();
+      final p = await _local.countPendientes();
+      if (mounted) setState(() { _online = online; _pendientes = p; });
+    });
+  }
 
   Future<void> _logout() async {
     final confirmar = await showDialog<bool>(
@@ -128,9 +158,42 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: Column(
+        children: [
+          // Banner offline
+          if (!_online)
+            Material(
+              color: Colors.orange.shade700,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 4,
+                  bottom: 6,
+                  left: 16,
+                  right: 16,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _pendientes > 0
+                            ? 'Sin conexión · $_pendientes operación${_pendientes > 1 ? 'es' : ''} pendiente${_pendientes > 1 ? 's' : ''}'
+                            : 'Sin conexión · Mostrando datos locales',
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -183,11 +246,9 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        nombre,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
+                      Text(nombre,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
                       FutureBuilder<String?>(
                         future: AuthService.getEmail(),
                         builder: (_, snap) => Text(
@@ -196,9 +257,33 @@ class _MainScreenState extends State<MainScreen> {
                               fontSize: 12, color: Colors.grey.shade600),
                         ),
                       ),
+                      if (!_online) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'Offline · $_pendientes pendiente${_pendientes != 1 ? 's' : ''}',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 11),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
+                if (_pendientes > 0)
+                  ListTile(
+                    leading:
+                        const Icon(Icons.sync, color: Colors.orange),
+                    title: Text('$_pendientes pendiente${_pendientes != 1 ? 's' : ''} por sincronizar'),
+                    subtitle: const Text('Se sincronizará al recuperar conexión'),
+                  ),
+                const Divider(),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
                   title: const Text('Cerrar sesión',
