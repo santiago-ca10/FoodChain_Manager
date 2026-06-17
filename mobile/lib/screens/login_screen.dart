@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../services/auth_service.dart';
 import '../main.dart' show MainScreen;
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -174,6 +175,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: TextStyle(fontSize: 16),
                                 ),
                         ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const RegisterScreen()),
+                        ),
+                        child: const Text('¿No tenés cuenta? Registrate'),
                       ),
                     ],
                   ),
