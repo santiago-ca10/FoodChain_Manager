@@ -60,7 +60,6 @@ class ApiService {
         endpoint: '/terceros',
         body: datos,
       );
-      // Optimistic local insert
       final temp = Tercero(
         id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
         nombre: datos['nombre'] ?? '',
@@ -72,6 +71,43 @@ class ApiService {
       lista.add(temp);
       await _local.cacheTerceros(lista);
       return temp;
+    }
+  }
+
+  Future<Tercero> actualizarTercero(String id, Map<String, dynamic> datos) async {
+    if (await _sync.hayConexion()) {
+      final response = await http.put(
+        Uri.parse('$baseUrl/terceros/$id'),
+        headers: await _headers(),
+        body: jsonEncode(datos),
+      );
+      if (response.statusCode == 200) {
+        final t = Tercero.fromJson(jsonDecode(response.body));
+        final lista = await _local.getTerceros();
+        final idx = lista.indexWhere((e) => e.id == id);
+        if (idx != -1) lista[idx] = t;
+        await _local.cacheTerceros(lista);
+        return t;
+      }
+      throw Exception('Error al actualizar tercero: ${response.statusCode}');
+    } else {
+      await _local.encolarOperacion(
+        metodo: 'PUT',
+        endpoint: '/terceros/$id',
+        body: datos,
+      );
+      final lista = await _local.getTerceros();
+      final idx = lista.indexWhere((e) => e.id == id);
+      final updated = Tercero(
+        id: id,
+        nombre: datos['nombre'] ?? '',
+        tipo: datos['tipo'] ?? '',
+        telefono: datos['telefono'],
+        direccion: datos['direccion'],
+      );
+      if (idx != -1) lista[idx] = updated;
+      await _local.cacheTerceros(lista);
+      return updated;
     }
   }
 
@@ -252,7 +288,6 @@ class ApiService {
 
   Future<void> deleteMovimiento(String id) async {
     if (id.startsWith('temp_')) {
-      // Era un registro temporal, solo eliminar de cola
       await _local.deleteMovimientoLocal(id);
       return;
     }

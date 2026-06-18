@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const terceroController = require('../controllers/terceroController');
+const { getTerceros, getTercero, createTercero, updateTercero, deleteTercero } = require('../controllers/terceroController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.post('/',         terceroController.crearTercero);
-router.get('/',          terceroController.obtenerTerceros);
-router.put('/:id',       terceroController.actualizarTercero);  
-router.delete('/:id',    terceroController.eliminarTercero);    
+router.use(authMiddleware);
+
+router.get('/', getTerceros);
+router.get('/:id', getTercero);
+router.post('/', createTercero);
+router.put('/:id', updateTercero);
+router.delete('/:id', deleteTercero);
 
 module.exports = router;

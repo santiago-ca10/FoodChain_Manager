@@ -1,49 +1,63 @@
-const Tercero = require('../models/Tercero');
+const { Tercero } = require('../models');
 
-// Crear un nuevo Tercero (Cliente o Proveedor)
-exports.crearTercero = async (req, res) => {
+const getTerceros = async (req, res) => {
   try {
-    const nuevoTercero = await Tercero.create(req.body);
-    res.status(201).json(nuevoTercero);
-  } catch (error) {
-    res.status(400).json({ error: 'No se pudo crear el tercero', detalle: error.message });
-  }
-};
-
-// Obtener todos los Terceros
-exports.obtenerTerceros = async (req, res) => {
-  try {
-    const terceros = await Tercero.findAll();
+    const terceros = await Tercero.findAll({ order: [['nombre', 'ASC']] });
     res.json(terceros);
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener terceros' });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Actualizar un Tercero existente
-exports.actualizarTercero = async (req, res) => {
+const getTercero = async (req, res) => {
   try {
     const tercero = await Tercero.findByPk(req.params.id);
-    if (!tercero) {
-      return res.status(404).json({ error: 'Tercero no encontrado' });
-    }
-    await tercero.update(req.body);
+    if (!tercero) return res.status(404).json({ error: 'Tercero no encontrado' });
     res.json(tercero);
   } catch (error) {
-    res.status(400).json({ error: 'Error al actualizar tercero', detalle: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Eliminar un Tercero
-exports.eliminarTercero = async (req, res) => {
+const createTercero = async (req, res) => {
   try {
-    const tercero = await Tercero.findByPk(req.params.id);
-    if (!tercero) {
-      return res.status(404).json({ error: 'Tercero no encontrado' });
+    const { nombre, tipo, telefono, email, direccion } = req.body;
+    if (!nombre || !tipo) {
+      return res.status(400).json({ error: 'nombre y tipo son requeridos' });
     }
-    await tercero.destroy();
-    res.json({ mensaje: 'Tercero eliminado correctamente' });
+    const tercero = await Tercero.create({ nombre, tipo, telefono, email, direccion });
+    res.status(201).json(tercero);
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar tercero', detalle: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
+
+const updateTercero = async (req, res) => {
+  try {
+    const tercero = await Tercero.findByPk(req.params.id);
+    if (!tercero) return res.status(404).json({ error: 'Tercero no encontrado' });
+
+    const { nombre, tipo, telefono, email, direccion } = req.body;
+    if (!nombre || !tipo) {
+      return res.status(400).json({ error: 'nombre y tipo son requeridos' });
+    }
+
+    await tercero.update({ nombre, tipo, telefono, email, direccion });
+    res.json(tercero);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteTercero = async (req, res) => {
+  try {
+    const tercero = await Tercero.findByPk(req.params.id);
+    if (!tercero) return res.status(404).json({ error: 'Tercero no encontrado' });
+    await tercero.destroy();
+    res.json({ message: 'Tercero eliminado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getTerceros, getTercero, createTercero, updateTercero, deleteTercero };

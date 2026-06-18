@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/tercero_model.dart';
 import '../services/api_service.dart';
 
 class FormTerceroScreen extends StatefulWidget {
-  const FormTerceroScreen({super.key});
+  final Tercero? tercero;
+
+  const FormTerceroScreen({super.key, this.tercero});
 
   @override
   State<FormTerceroScreen> createState() => _FormTerceroScreenState();
@@ -10,107 +13,134 @@ class FormTerceroScreen extends StatefulWidget {
 
 class _FormTerceroScreenState extends State<FormTerceroScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nombreController = TextEditingController();
-  final _telefonoController = TextEditingController();
-  final _direccionController = TextEditingController();
-  String _tipoSeleccionado = 'cliente';
-  bool _guardando = false;
+  final _api = ApiService();
+
+  late final TextEditingController _nombreCtrl;
+  late final TextEditingController _telefonoCtrl;
+  late final TextEditingController _direccionCtrl;
+  String _tipo = 'cliente';
+  bool _loading = false;
+
+  bool get _esEdicion => widget.tercero != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final t = widget.tercero;
+    _nombreCtrl   = TextEditingController(text: t?.nombre ?? '');
+    _telefonoCtrl = TextEditingController(text: t?.telefono ?? '');
+    _direccionCtrl = TextEditingController(text: t?.direccion ?? '');
+    if (t != null) _tipo = t.tipo;
+  }
 
   @override
   void dispose() {
-    _nombreController.dispose();
-    _telefonoController.dispose();
-    _direccionController.dispose();
+    _nombreCtrl.dispose();
+    _telefonoCtrl.dispose();
+    _direccionCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
 
-    setState(() => _guardando = true);
+    final datos = {
+      'nombre':    _nombreCtrl.text.trim(),
+      'tipo':      _tipo,
+      'telefono':  _telefonoCtrl.text.trim(),
+      'direccion': _direccionCtrl.text.trim(),
+    };
 
     try {
-      await ApiService().crearTercero({
-        'nombre': _nombreController.text.trim(),
-        'tipo': _tipoSeleccionado,
-        'telefono': _telefonoController.text.trim(),
-        'direccion': _direccionController.text.trim(),
-      });
-
-      if (!mounted) return;
-      Navigator.pop(context, true);
+      if (_esEdicion) {
+        await _api.actualizarTercero(widget.tercero!.id, datos);
+      } else {
+        await _api.crearTercero(datos);
+      }
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      setState(() => _guardando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nuevo tercero')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _nombreController,
-              decoration: const InputDecoration(
-                labelText: 'Nombre *',
-                border: OutlineInputBorder(),
+      appBar: AppBar(
+        title: Text(_esEdicion ? 'Editar tercero' : 'Nuevo tercero'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _nombreCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre *',
+                  border: OutlineInputBorder(),
+                ),
+                textCapitalization: TextCapitalization.words,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Campo requerido' : null,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'El nombre es obligatorio' : null,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _tipoSeleccionado,
-              decoration: const InputDecoration(
-                labelText: 'Tipo *',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _tipo,
+                decoration: const InputDecoration(
+                  labelText: 'Tipo *',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'cliente',   child: Text('Cliente')),
+                  DropdownMenuItem(value: 'proveedor', child: Text('Proveedor')),
+                  DropdownMenuItem(value: 'ambos',     child: Text('Ambos')),
+                ],
+                onChanged: (v) => setState(() => _tipo = v ?? 'cliente'),
               ),
-              items: const [
-                DropdownMenuItem(value: 'cliente',   child: Text('Cliente')),
-                DropdownMenuItem(value: 'proveedor', child: Text('Proveedor')),
-                DropdownMenuItem(value: 'ambos',     child: Text('Ambos')),
-              ],
-              onChanged: (v) => setState(() => _tipoSeleccionado = v!),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _telefonoController,
-              decoration: const InputDecoration(
-                labelText: 'Teléfono',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _telefonoCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Teléfono',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.phone,
               ),
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _direccionController,
-              decoration: const InputDecoration(
-                labelText: 'Dirección',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _direccionCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Dirección',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
               ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _guardando ? null : _guardar,
-              child: _guardando
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Guardar'),
-            ),
-          ],
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _loading ? null : _guardar,
+                  child: _loading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : Text(_esEdicion ? 'Guardar cambios' : 'Crear tercero'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
