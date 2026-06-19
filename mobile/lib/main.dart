@@ -7,10 +7,11 @@ import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 import 'services/sync_service.dart';
 import 'services/local_database.dart';
+import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await LocalDatabase().db; // inicializa SQLite al arrancar
+  await LocalDatabase().db;
   runApp(const FoodChainApp());
 }
 
@@ -94,8 +95,11 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   bool _online = true;
   int _pendientes = 0;
+  int _stockBajo = 0;
+
   final _sync = SyncService();
   final _local = LocalDatabase();
+  final _api = ApiService();
 
   final List<Widget> _screens = const [
     DashboardScreen(),
@@ -108,22 +112,32 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _initConectividad();
+    _cargarStockBajo();
   }
 
   void _initConectividad() {
-    // Estado inicial
     _sync.hayConexion().then((online) async {
       if (online) await _sync.sincronizarPendientes();
       final p = await _local.countPendientes();
       if (mounted) setState(() { _online = online; _pendientes = p; });
     });
 
-    // Escuchar cambios
     _sync.conectividadStream.listen((online) async {
-      if (online) await _sync.sincronizarPendientes();
+      if (online) {
+        await _sync.sincronizarPendientes();
+        _cargarStockBajo(); // refresca badge tras sincronizar
+      }
       final p = await _local.countPendientes();
       if (mounted) setState(() { _online = online; _pendientes = p; });
     });
+  }
+
+  Future<void> _cargarStockBajo() async {
+    try {
+      final productos = await _api.getProductos();
+      final bajo = productos.where((p) => p.stock < 10).length;
+      if (mounted) setState(() => _stockBajo = bajo);
+    } catch (_) {}
   }
 
   Future<void> _logout() async {
@@ -160,7 +174,6 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Banner offline
           if (!_online)
             Material(
               color: Colors.orange.shade700,
@@ -180,7 +193,8 @@ class _MainScreenState extends State<MainScreen> {
                         _pendientes > 0
                             ? 'Sin conexión · $_pendientes operación${_pendientes > 1 ? 'es' : ''} pendiente${_pendientes > 1 ? 's' : ''}'
                             : 'Sin conexión · Mostrando datos locales',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
                   ],
@@ -197,24 +211,38 @@ class _MainScreenState extends State<MainScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
-          NavigationDestination(
+        onDestinationSelected: (i) {
+          setState(() => _currentIndex = i);
+          // Al navegar a Productos, refrescar el badge
+          if (i == 2) _cargarStockBajo();
+        },
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.swap_horiz_outlined),
             selectedIcon: Icon(Icons.swap_horiz),
             label: 'Movimientos',
           ),
           NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
+            icon: _stockBajo > 0
+                ? Badge(
+                    label: Text('$_stockBajo'),
+                    child: const Icon(Icons.inventory_2_outlined),
+                  )
+                : const Icon(Icons.inventory_2_outlined),
+            selectedIcon: _stockBajo > 0
+                ? Badge(
+                    label: Text('$_stockBajo'),
+                    child: const Icon(Icons.inventory_2),
+                  )
+                : const Icon(Icons.inventory_2),
             label: 'Productos',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
             label: 'Terceros',
@@ -238,11 +266,13 @@ class _MainScreenState extends State<MainScreen> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.primary,
                         child: Text(
                           nombre.isNotEmpty ? nombre[0].toUpperCase() : 'U',
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -276,12 +306,25 @@ class _MainScreenState extends State<MainScreen> {
                     ],
                   ),
                 ),
+                if (_stockBajo > 0)
+                  ListTile(
+                    leading: const Icon(Icons.warning_amber_rounded,
+                        color: Colors.orange),
+                    title: Text(
+                        '$_stockBajo producto${_stockBajo != 1 ? 's' : ''} con stock bajo'),
+                    subtitle: const Text('Revisá la sección Productos'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() => _currentIndex = 2);
+                    },
+                  ),
                 if (_pendientes > 0)
                   ListTile(
-                    leading:
-                        const Icon(Icons.sync, color: Colors.orange),
-                    title: Text('$_pendientes pendiente${_pendientes != 1 ? 's' : ''} por sincronizar'),
-                    subtitle: const Text('Se sincronizará al recuperar conexión'),
+                    leading: const Icon(Icons.sync, color: Colors.orange),
+                    title: Text(
+                        '$_pendientes pendiente${_pendientes != 1 ? 's' : ''} por sincronizar'),
+                    subtitle:
+                        const Text('Se sincronizará al recuperar conexión'),
                   ),
                 const Divider(),
                 ListTile(
