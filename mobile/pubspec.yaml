@@ -11,42 +11,24 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Iconos estilo iOS
   cupertino_icons: ^1.0.8
-
-  # Peticiones HTTP a la API
   http: ^1.3.0
-
-  # Guardar datos localmente (ej: token JWT del login)
   shared_preferences: ^2.2.2
-
-  # Base de datos local SQLite para modo offline
   sqflite: ^2.3.2
-
-  # Detectar conexión a internet
   connectivity_plus: ^6.0.3
-
-  # Manejo de rutas de archivos y bases de datos
   path: ^1.9.0
+
+  # Exportación
+  pdf: ^3.11.1
+  printing: ^5.13.1
+  excel: ^4.0.6
+  path_provider: ^2.1.4
+  share_plus: ^10.1.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # Reglas recomendadas de buenas prácticas
   flutter_lints: ^6.0.0
 
 flutter:
-  # Incluye los iconos de Material Design
   uses-material-design: true
-
-  # Para agregar imágenes:
-  # assets:
-  #   - images/
-
-  # Para agregar fuentes personalizadas:
-  # fonts:
-  #   - family: MiFuente
-  #     fonts:
-  #       - asset: fonts/MiFuente-Regular.ttf
-  
