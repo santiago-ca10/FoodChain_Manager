@@ -55,7 +55,7 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
 
   String _tituloExport() {
     final partes = <String>[];
-    if (_filtroTipo != 'todos') partes.add(_filtroTipo[0].toUpperCase() + _filtroTipo.substring(1) + 's');
+    if (_filtroTipo != 'todos') partes.add('${_filtroTipo[0].toUpperCase()}${_filtroTipo.substring(1)}s');
     if (_filtroFecha == 'hoy') partes.add('Hoy');
     if (_filtroFecha == 'semana') partes.add('Esta semana');
     if (_filtroFecha == 'mes') partes.add('Este mes');

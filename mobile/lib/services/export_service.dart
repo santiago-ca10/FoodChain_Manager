@@ -59,16 +59,15 @@ class ExportService {
           pw.Table(
             border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
             columnWidths: {
-              0: const pw.FlexColumnWidth(1.2), // fecha
-              1: const pw.FlexColumnWidth(1),   // tipo
-              2: const pw.FlexColumnWidth(2),   // producto
-              3: const pw.FlexColumnWidth(2),   // tercero
-              4: const pw.FlexColumnWidth(0.8), // cantidad
-              5: const pw.FlexColumnWidth(1.2), // precio unit
-              6: const pw.FlexColumnWidth(1.2), // total
+              0: const pw.FlexColumnWidth(1.2),
+              1: const pw.FlexColumnWidth(1),
+              2: const pw.FlexColumnWidth(2),
+              3: const pw.FlexColumnWidth(2),
+              4: const pw.FlexColumnWidth(0.8),
+              5: const pw.FlexColumnWidth(1.2),
+              6: const pw.FlexColumnWidth(1.2),
             },
             children: [
-              // Header
               pw.TableRow(
                 decoration: const pw.BoxDecoration(color: PdfColors.green800),
                 children: [
@@ -87,10 +86,8 @@ class ExportService {
                   ),
                 )).toList(),
               ),
-              // Filas
-              ...movimientos.asMap().entries.map((entry) {
-                final i = entry.key;
-                final m = entry.value;
+              ...List.generate(movimientos.length, (i) {
+                final m = movimientos[i];
                 final bg = i.isEven ? PdfColors.white : PdfColors.grey50;
                 return pw.TableRow(
                   decoration: pw.BoxDecoration(color: bg),
@@ -114,7 +111,8 @@ class ExportService {
     );
 
     final bytes = await pdf.save();
-    final file = File('${(await _dir).path}/movimientos_${DateTime.now().millisecondsSinceEpoch}.pdf');
+    final file = File(
+        '${(await _dir).path}/movimientos_${DateTime.now().millisecondsSinceEpoch}.pdf');
     await file.writeAsBytes(bytes);
     await Share.shareXFiles(
       [XFile(file.path, mimeType: 'application/pdf')],
@@ -188,13 +186,13 @@ class ExportService {
     final excel = Excel.createExcel();
     final sheet = excel['Movimientos'];
 
-    // Encabezados
     final headers = [
       'Fecha', 'Tipo', 'Producto', 'Tercero',
       'Cantidad', 'Precio Unitario', 'Total',
     ];
     for (var i = 0; i < headers.length; i++) {
-      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
+      final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
       cell.value = TextCellValue(headers[i]);
       cell.cellStyle = CellStyle(
         bold: true,
@@ -203,7 +201,6 @@ class ExportService {
       );
     }
 
-    // Datos
     for (var i = 0; i < movimientos.length; i++) {
       final m = movimientos[i];
       final row = i + 1;
@@ -228,7 +225,6 @@ class ExportService {
       }
     }
 
-    // Ancho de columnas
     sheet.setColumnWidth(0, 14);
     sheet.setColumnWidth(1, 12);
     sheet.setColumnWidth(2, 22);
@@ -237,7 +233,6 @@ class ExportService {
     sheet.setColumnWidth(5, 14);
     sheet.setColumnWidth(6, 14);
 
-    // Fila resumen
     final resumenRow = movimientos.length + 2;
     final totalCompras = movimientos
         .where((m) => m.tipo == 'compra')
@@ -246,20 +241,22 @@ class ExportService {
         .where((m) => m.tipo == 'venta')
         .fold(0.0, (s, m) => s + m.totalCalculado);
 
-    void _celdaResumen(int col, dynamic val) {
+    void celdaResumen(int col, dynamic val) {
       final c = sheet.cell(
           CellIndex.indexByColumnRow(columnIndex: col, rowIndex: resumenRow));
-      c.value = val is double ? DoubleCellValue(val) : TextCellValue(val.toString());
+      c.value = val is double
+          ? DoubleCellValue(val)
+          : TextCellValue(val.toString());
       c.cellStyle = CellStyle(bold: true);
     }
 
-    _celdaResumen(0, 'RESUMEN');
-    _celdaResumen(1, 'Compras:');
-    _celdaResumen(2, totalCompras);
-    _celdaResumen(3, 'Ventas:');
-    _celdaResumen(4, totalVentas);
-    _celdaResumen(5, 'Ganancia:');
-    _celdaResumen(6, totalVentas - totalCompras);
+    celdaResumen(0, 'RESUMEN');
+    celdaResumen(1, 'Compras:');
+    celdaResumen(2, totalCompras);
+    celdaResumen(3, 'Ventas:');
+    celdaResumen(4, totalVentas);
+    celdaResumen(5, 'Ganancia:');
+    celdaResumen(6, totalVentas - totalCompras);
 
     final bytes = excel.encode();
     if (bytes == null) throw Exception('Error al generar Excel');
@@ -267,7 +264,9 @@ class ExportService {
         '${(await _dir).path}/movimientos_${DateTime.now().millisecondsSinceEpoch}.xlsx');
     await file.writeAsBytes(bytes);
     await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')],
+      [XFile(file.path,
+          mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')],
       subject: titulo,
     );
   }
@@ -276,7 +275,6 @@ class ExportService {
 
   Future<void> exportarImagen(List<Movimiento> movimientos,
       {String titulo = 'Movimientos'}) async {
-    // Genera el mismo PDF y rasteriza la primera página como PNG
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -329,9 +327,8 @@ class ExportService {
                             fontSize: 8)),
                   )).toList(),
                 ),
-                ...movimientos.take(30).asMap().entries.map((entry) {
-                  final i = entry.key;
-                  final m = entry.value;
+                ...List.generate(movimientos.take(30).length, (i) {
+                  final m = movimientos[i];
                   final bg = i.isEven ? PdfColors.white : PdfColors.grey50;
                   return pw.TableRow(
                     decoration: pw.BoxDecoration(color: bg),
@@ -357,9 +354,8 @@ class ExportService {
 
     final pdfBytes = await pdf.save();
 
-    // Rasterizar primera página a PNG
-    final pages = await Printing.raster(pdfBytes, dpi: 150);
-    final page = await pages.first;
+    // Rasterizar primera página como PNG — Printing.raster devuelve Stream
+    final page = await Printing.raster(pdfBytes, dpi: 150).first;
     final imgBytes = await page.toPng();
 
     final file = File(
