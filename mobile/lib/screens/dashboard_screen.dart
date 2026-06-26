@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../models/movimiento_model.dart';
 import '../models/producto_model.dart';
@@ -62,180 +63,192 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onRefresh: () async => _cargar(),
             child: CustomScrollView(
               slivers: [
-              // ── AppBar ─────────────────────────────────────
-              SliverAppBar(
-                expandedHeight: 110,
-                floating: true,
-                pinned: true,
-                backgroundColor: cs.primary,
-                foregroundColor: cs.onPrimary,
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding:
-                      const EdgeInsets.only(left: 20, bottom: 14),
-                  title: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'FoodChain Manager',
-                        style: TextStyle(
-                          color: cs.onPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                // ── AppBar ──────────────────────────────────
+                SliverAppBar(
+                  expandedHeight: 110,
+                  floating: true,
+                  pinned: true,
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
+                  flexibleSpace: FlexibleSpaceBar(
+                    titlePadding:
+                        const EdgeInsets.only(left: 20, bottom: 14),
+                    title: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'FoodChain Manager',
+                          style: TextStyle(
+                            color: cs.onPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      Text(
-                        _fechaHoy(),
-                        style: TextStyle(
-                          color: cs.onPrimary.withValues(alpha: 0.8),
-                          fontSize: 11,
+                        Text(
+                          _fechaHoy(),
+                          style: TextStyle(
+                            color: cs.onPrimary.withValues(alpha: 0.8),
+                            fontSize: 11,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [cs.primary, cs.secondary],
+                      ],
+                    ),
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [cs.primary, cs.secondary],
+                        ),
                       ),
                     ),
                   ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh_outlined),
+                      onPressed: _cargar,
+                      tooltip: 'Actualizar',
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                 ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.refresh_outlined),
-                    onPressed: _cargar,
-                    tooltip: 'Actualizar',
+
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (snapshot.hasError)
+                  SliverFillRemaining(
+                    child: _ErrorView(
+                      mensaje: snapshot.error.toString(),
+                      onRetry: _cargar,
+                    ),
+                  )
+                else ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        // ── KPIs hoy ──────────────────────
+                        const _SeccionTitulo(titulo: 'Hoy'),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _KpiCard(
+                                titulo: 'Compras',
+                                valor: snapshot.data!.comprasHoy,
+                                total: snapshot.data!.totalComprasHoy,
+                                icono: Icons.arrow_downward,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _KpiCard(
+                                titulo: 'Ventas',
+                                valor: snapshot.data!.ventasHoy,
+                                total: snapshot.data!.totalVentasHoy,
+                                icono: Icons.arrow_upward,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // ── KPIs semana ───────────────────
+                        const SizedBox(height: 20),
+                        const _SeccionTitulo(titulo: 'Esta semana'),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _KpiCard(
+                                titulo: 'Compras',
+                                valor: snapshot.data!.comprasSemana,
+                                total: snapshot.data!.totalComprasSemana,
+                                icono: Icons.arrow_downward,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _KpiCard(
+                                titulo: 'Ventas',
+                                valor: snapshot.data!.ventasSemana,
+                                total: snapshot.data!.totalVentasSemana,
+                                icono: Icons.arrow_upward,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // ── Ganancia estimada ─────────────
+                        const SizedBox(height: 12),
+                        _GananciaCard(
+                          ganancia: snapshot.data!.gananciaSemana,
+                        ),
+
+                        // ── Gráfico línea: últimos 7 días ─
+                        const SizedBox(height: 24),
+                        const _SeccionTitulo(titulo: 'Últimos 7 días'),
+                        const SizedBox(height: 10),
+                        _GraficoLinea(data: snapshot.data!),
+
+                        // ── Gráfico barras: 4 semanas ─────
+                        const SizedBox(height: 24),
+                        const _SeccionTitulo(titulo: 'Últimas 4 semanas'),
+                        const SizedBox(height: 10),
+                        _GraficoBarras(data: snapshot.data!),
+
+                        // ── Stock crítico ─────────────────
+                        const SizedBox(height: 24),
+                        const _SeccionTitulo(titulo: 'Alertas de stock'),
+                        const SizedBox(height: 10),
+                        if (snapshot.data!.stockCritico.isEmpty)
+                          _StockOkCard()
+                        else
+                          ...snapshot.data!.stockCritico
+                              .map((p) => _StockAlertaItem(
+                                    producto: p,
+                                    umbral: _umbralStockBajo,
+                                  )),
+
+                        // ── Accesos rápidos ───────────────
+                        const SizedBox(height: 20),
+                        const _SeccionTitulo(titulo: 'Accesos rápidos'),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _AccesoRapido(
+                                label: 'Nueva compra',
+                                icono: Icons.add_shopping_cart,
+                                color: Colors.green.shade700,
+                                onTap: () => _irARegistrar('compra'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _AccesoRapido(
+                                label: 'Nueva venta',
+                                icono: Icons.point_of_sale,
+                                color: Colors.red.shade700,
+                                onTap: () => _irARegistrar('venta'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ]),
+                    ),
                   ),
-                  const SizedBox(width: 8),
                 ],
-              ),
-
-              if (snapshot.connectionState == ConnectionState.waiting)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (snapshot.hasError)
-                SliverFillRemaining(
-                  child: _ErrorView(
-                    mensaje: snapshot.error.toString(),
-                    onRetry: _cargar,
-                  ),
-                )
-              else ...[
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      // ── KPIs hoy ─────────────────────────
-                      _SeccionTitulo(titulo: 'Hoy'),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _KpiCard(
-                              titulo: 'Compras',
-                              valor: snapshot.data!.comprasHoy,
-                              total: snapshot.data!.totalComprasHoy,
-                              icono: Icons.arrow_downward,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _KpiCard(
-                              titulo: 'Ventas',
-                              valor: snapshot.data!.ventasHoy,
-                              total: snapshot.data!.totalVentasHoy,
-                              icono: Icons.arrow_upward,
-                              color: Colors.red.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // ── KPIs semana ───────────────────────
-                      const SizedBox(height: 20),
-                      _SeccionTitulo(titulo: 'Esta semana'),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _KpiCard(
-                              titulo: 'Compras',
-                              valor: snapshot.data!.comprasSemana,
-                              total: snapshot.data!.totalComprasSemana,
-                              icono: Icons.arrow_downward,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _KpiCard(
-                              titulo: 'Ventas',
-                              valor: snapshot.data!.ventasSemana,
-                              total: snapshot.data!.totalVentasSemana,
-                              icono: Icons.arrow_upward,
-                              color: Colors.red.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // ── Ganancia estimada ─────────────────
-                      const SizedBox(height: 12),
-                      _GananciaCard(
-                        ganancia: snapshot.data!.gananciaSemana,
-                      ),
-
-                      // ── Stock crítico ─────────────────────
-                      const SizedBox(height: 20),
-                      _SeccionTitulo(titulo: 'Alertas de stock'),
-                      const SizedBox(height: 10),
-                      if (snapshot.data!.stockCritico.isEmpty)
-                        _StockOkCard()
-                      else
-                        ...snapshot.data!.stockCritico
-                            .map((p) => _StockAlertaItem(
-                                  producto: p,
-                                  umbral: _umbralStockBajo,
-                                )),
-
-                      // ── Accesos rápidos ───────────────────
-                      const SizedBox(height: 20),
-                      _SeccionTitulo(titulo: 'Accesos rápidos'),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _AccesoRapido(
-                              label: 'Nueva compra',
-                              icono: Icons.add_shopping_cart,
-                              color: Colors.green.shade700,
-                              onTap: () => _irARegistrar('compra'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _AccesoRapido(
-                              label: 'Nueva venta',
-                              icono: Icons.point_of_sale,
-                              color: Colors.red.shade700,
-                              onTap: () => _irARegistrar('venta'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                    ]),
-                  ),
-                ),
               ],
-            ],
-          ),  // CustomScrollView
-          ); // RefreshIndicator
+            ),
+          );
         },
       ),
     );
@@ -251,7 +264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ── Modelo de datos del dashboard ─────────────────────────────
+// ── Modelo de datos ────────────────────────────────────────────
 
 class _DashboardData {
   final List<Movimiento> movimientos;
@@ -273,25 +286,19 @@ class _DashboardData {
     if (fecha == null) return false;
     final now = DateTime.now();
     final inicioSemana = now.subtract(Duration(days: now.weekday - 1));
-    final inicio = DateTime(inicioSemana.year, inicioSemana.month, inicioSemana.day);
+    final inicio = DateTime(
+        inicioSemana.year, inicioSemana.month, inicioSemana.day);
     return fecha.isAfter(inicio.subtract(const Duration(seconds: 1)));
   }
 
-  List<Movimiento> get _comprasHoy => movimientos
-      .where((m) => m.tipo == 'compra' && _esHoy(m.fecha))
-      .toList();
-
-  List<Movimiento> get _ventasHoy => movimientos
-      .where((m) => m.tipo == 'venta' && _esHoy(m.fecha))
-      .toList();
-
-  List<Movimiento> get _comprasSemana => movimientos
-      .where((m) => m.tipo == 'compra' && _esSemana(m.fecha))
-      .toList();
-
-  List<Movimiento> get _ventasSemana => movimientos
-      .where((m) => m.tipo == 'venta' && _esSemana(m.fecha))
-      .toList();
+  List<Movimiento> get _comprasHoy =>
+      movimientos.where((m) => m.tipo == 'compra' && _esHoy(m.fecha)).toList();
+  List<Movimiento> get _ventasHoy =>
+      movimientos.where((m) => m.tipo == 'venta' && _esHoy(m.fecha)).toList();
+  List<Movimiento> get _comprasSemana =>
+      movimientos.where((m) => m.tipo == 'compra' && _esSemana(m.fecha)).toList();
+  List<Movimiento> get _ventasSemana =>
+      movimientos.where((m) => m.tipo == 'venta' && _esSemana(m.fecha)).toList();
 
   int get comprasHoy => _comprasHoy.length;
   int get ventasHoy => _ventasHoy.length;
@@ -310,9 +317,371 @@ class _DashboardData {
 
   List<Producto> get stockCritico =>
       productos.where((p) => p.stock < _umbral).toList();
+
+  /// Totales por día para los últimos [dias] días.
+  /// Devuelve `Map<offset, {compras, ventas}>` donde offset 0 = hoy, 6 = hace 6 días.
+  Map<int, Map<String, double>> totalesPorDia(int dias) {
+    final now = DateTime.now();
+    final result = <int, Map<String, double>>{};
+    for (var i = 0; i < dias; i++) {
+      result[i] = {'compras': 0, 'ventas': 0};
+    }
+    for (final m in movimientos) {
+      if (m.fecha == null) continue;
+      final diff = now.difference(m.fecha!).inDays;
+      if (diff < 0 || diff >= dias) continue;
+      final key = m.tipo == 'compra' ? 'compras' : 'ventas';
+      result[diff]![key] = (result[diff]![key] ?? 0) + m.totalCalculado;
+    }
+    return result;
+  }
+
+  /// Totales por semana para las últimas [semanas] semanas.
+  Map<int, Map<String, double>> totalesPorSemana(int semanas) {
+    final now = DateTime.now();
+    final result = <int, Map<String, double>>{};
+    for (var i = 0; i < semanas; i++) {
+      result[i] = {'compras': 0, 'ventas': 0};
+    }
+    for (final m in movimientos) {
+      if (m.fecha == null) continue;
+      final diff = now.difference(m.fecha!).inDays;
+      final semana = (diff / 7).floor();
+      if (semana < 0 || semana >= semanas) continue;
+      final key = m.tipo == 'compra' ? 'compras' : 'ventas';
+      result[semana]![key] = (result[semana]![key] ?? 0) + m.totalCalculado;
+    }
+    return result;
+  }
 }
 
-// ── Widgets ───────────────────────────────────────────────────
+// ── Gráfico de línea: últimos 7 días ──────────────────────────
+
+class _GraficoLinea extends StatelessWidget {
+  final _DashboardData data;
+  const _GraficoLinea({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final totales = data.totalesPorDia(7);
+    final colorCompras = Colors.green.shade600;
+    final colorVentas = Colors.red.shade600;
+
+    // Puntos: x = día (0=hace6días .. 6=hoy) invertido para mostrar cronológico
+    List<FlSpot> spotsCompras = [];
+    List<FlSpot> spotsVentas = [];
+    for (var i = 0; i < 7; i++) {
+      final x = (6 - i).toDouble();
+      spotsCompras.add(FlSpot(x, totales[i]!['compras']!));
+      spotsVentas.add(FlSpot(x, totales[i]!['ventas']!));
+    }
+
+    final maxY = [
+      ...spotsCompras.map((s) => s.y),
+      ...spotsVentas.map((s) => s.y),
+    ].fold(0.0, (a, b) => a > b ? a : b);
+
+    final now = DateTime.now();
+    final diasLabel = List.generate(7, (i) {
+      final d = now.subtract(Duration(days: 6 - i));
+      return '${d.day}/${d.month}';
+    });
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 20, 20, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Leyenda
+            Row(
+              children: [
+                _leyendaDot(colorCompras, 'Compras'),
+                const SizedBox(width: 16),
+                _leyendaDot(colorVentas, 'Ventas'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 180,
+              child: LineChart(
+                LineChartData(
+                  minY: 0,
+                  maxY: maxY == 0 ? 100 : maxY * 1.2,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: Colors.grey.shade200,
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 48,
+                        getTitlesWidget: (v, _) => Text(
+                          _formatK(v),
+                          style: TextStyle(
+                              fontSize: 10, color: Colors.grey.shade500),
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 1,
+                        getTitlesWidget: (v, _) {
+                          final idx = v.toInt();
+                          if (idx < 0 || idx >= diasLabel.length) {
+                            return const SizedBox();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              diasLabel[idx],
+                              style: TextStyle(
+                                  fontSize: 9, color: Colors.grey.shade500),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (spots) => spots.map((s) {
+                        final label = s.barIndex == 0 ? 'Compras' : 'Ventas';
+                        return LineTooltipItem(
+                          '$label\n\$${s.y.toStringAsFixed(0)}',
+                          TextStyle(
+                            color: s.barIndex == 0 ? colorCompras : colorVentas,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  lineBarsData: [
+                    _lineBar(spotsCompras, colorCompras),
+                    _lineBar(spotsVentas, colorVentas),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  LineChartBarData _lineBar(List<FlSpot> spots, Color color) =>
+      LineChartBarData(
+        spots: spots,
+        isCurved: true,
+        color: color,
+        barWidth: 2.5,
+        dotData: const FlDotData(show: false),
+        belowBarData: BarAreaData(
+          show: true,
+          color: color.withValues(alpha: 0.08),
+        ),
+      );
+
+  Widget _leyendaDot(Color color, String label) => Row(
+        children: [
+          Container(
+              width: 10,
+              height: 10,
+              decoration:
+                  BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+        ],
+      );
+
+  String _formatK(double v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}k';
+    return v.toStringAsFixed(0);
+  }
+}
+
+// ── Gráfico de barras: últimas 4 semanas ──────────────────────
+
+class _GraficoBarras extends StatelessWidget {
+  final _DashboardData data;
+  const _GraficoBarras({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final totales = data.totalesPorSemana(4);
+    final colorCompras = Colors.green.shade500;
+    final colorVentas = Colors.red.shade400;
+
+    final now = DateTime.now();
+    final semanaLabels = List.generate(4, (i) {
+      final inicio = now.subtract(Duration(days: (3 - i) * 7 + now.weekday - 1));
+      return 'S${i + 1}\n${inicio.day}/${inicio.month}';
+    });
+
+    double maxY = 0;
+    for (var i = 0; i < 4; i++) {
+      final c = totales[3 - i]!['compras']!;
+      final v = totales[3 - i]!['ventas']!;
+      if (c > maxY) maxY = c;
+      if (v > maxY) maxY = v;
+    }
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 20, 20, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _leyendaRect(colorCompras, 'Compras'),
+                const SizedBox(width: 16),
+                _leyendaRect(colorVentas, 'Ventas'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 180,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: maxY == 0 ? 100 : maxY * 1.25,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: Colors.grey.shade200,
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (v, _) {
+                          final idx = v.toInt();
+                          if (idx < 0 || idx >= semanaLabels.length) {
+                            return const SizedBox();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              semanaLabels[idx],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 9, color: Colors.grey.shade500),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 48,
+                        getTitlesWidget: (v, _) => Text(
+                          _formatK(v),
+                          style: TextStyle(
+                              fontSize: 10, color: Colors.grey.shade500),
+                        ),
+                      ),
+                    ),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipItem: (group, _, rod, rodIdx) {
+                        final label = rodIdx == 0 ? 'Compras' : 'Ventas';
+                        return BarTooltipItem(
+                          '$label\n\$${rod.toY.toStringAsFixed(0)}',
+                          TextStyle(
+                            color: rodIdx == 0 ? colorCompras : colorVentas,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  barGroups: List.generate(4, (i) {
+                    // i=0 → semana más antigua, i=3 → semana actual
+                    final semanaIdx = 3 - i;
+                    final compras = totales[semanaIdx]!['compras']!;
+                    final ventas = totales[semanaIdx]!['ventas']!;
+                    return BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: compras,
+                          color: colorCompras,
+                          width: 10,
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4)),
+                        ),
+                        BarChartRodData(
+                          toY: ventas,
+                          color: colorVentas,
+                          width: 10,
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4)),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _leyendaRect(Color color, String label) => Row(
+        children: [
+          Container(
+              width: 12,
+              height: 10,
+              decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+        ],
+      );
+
+  String _formatK(double v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}k';
+    return v.toStringAsFixed(0);
+  }
+}
+
+// ── Widgets existentes ─────────────────────────────────────────
 
 class _SeccionTitulo extends StatelessWidget {
   final String titulo;
@@ -383,7 +752,8 @@ class _KpiCard extends StatelessWidget {
               '\$${_formatear(total)}',
               style: TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color:
+                      Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -416,7 +786,8 @@ class _GananciaCard extends StatelessWidget {
         side: BorderSide(color: color.withValues(alpha: 0.3)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -439,7 +810,9 @@ class _GananciaCard extends StatelessWidget {
             Text(
               '${positivo ? '+' : ''}\$${_formatear(ganancia)}',
               style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold, color: color),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color),
             ),
           ],
         ),
@@ -495,7 +868,9 @@ class _StockAlertaItem extends StatelessWidget {
       ),
       child: ListTile(
         leading: Icon(
-          critico ? Icons.remove_circle_outline : Icons.warning_amber_outlined,
+          critico
+              ? Icons.remove_circle_outline
+              : Icons.warning_amber_outlined,
           color: color,
         ),
         title: Text(producto.nombre,
@@ -503,8 +878,7 @@ class _StockAlertaItem extends StatelessWidget {
         subtitle: Text(
             'Stock: ${producto.stock.toStringAsFixed(1)} ${producto.unidad}'),
         trailing: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
@@ -512,7 +886,9 @@ class _StockAlertaItem extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-                color: color, fontSize: 11, fontWeight: FontWeight.bold),
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -588,7 +964,8 @@ class _ErrorView extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(mensaje,
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                style: TextStyle(
+                    color: Colors.grey.shade500, fontSize: 12),
                 textAlign: TextAlign.center),
             const SizedBox(height: 20),
             ElevatedButton.icon(
